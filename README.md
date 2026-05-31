@@ -129,8 +129,8 @@ Measured on a developer workstation (4-page pool, single chromium, M-series chip
 Run your own:
 
 ```bash
-node test/loadtest.js --concurrency 8 --total 100 --unique
-node test/loadtest.js --concurrency 8 --total 100 --identical
+npm run loadtest -- --concurrency 8 --total 100 --unique
+npm run loadtest -- --concurrency 8 --total 100 --identical
 ```
 
 ### Tuning options

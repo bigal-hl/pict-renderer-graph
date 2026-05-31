@@ -1,0 +1,82 @@
+{
+	"Generated": "2026-05-31T01:43:59.972Z",
+	"Mode": "module",
+	"GitHubOrg": "fable-retold",
+	"DefaultBranch": "master",
+	"Module": {
+		"Name": "pict-renderer-graph",
+		"Repo": "pict-renderer-graph",
+		"Group": "",
+		"Branch": "master",
+		"HasDocs": true,
+		"HasCover": true,
+		"Sidebar": [
+			{
+				"Title": "Getting Started",
+				"Children": [
+					{
+						"Title": "Overview",
+						"Path": "README.md"
+					},
+					{
+						"Title": "Quick Start",
+						"Path": "quickstart.md"
+					}
+				]
+			},
+			{
+				"Title": "Guide",
+				"Children": [
+					{
+						"Title": "Architecture",
+						"Path": "architecture.md"
+					},
+					{
+						"Title": "Diagram Types",
+						"Path": "diagram-types.md"
+					},
+					{
+						"Title": "Styles",
+						"Path": "styles.md"
+					},
+					{
+						"Title": "Invocation Modes",
+						"Path": "invocation-modes.md"
+					}
+				]
+			},
+			{
+				"Title": "Retold Ecosystem",
+				"Children": [
+					{
+						"Title": "pict-section-excalidraw",
+						"Path": "https://fable-retold.github.io/pict-section-excalidraw/README.md"
+					},
+					{
+						"Title": "Fable",
+						"Path": "https://fable-retold.github.io/fable/README.md"
+					},
+					{
+						"Title": "fable-serviceproviderbase",
+						"Path": "https://fable-retold.github.io/fable-serviceproviderbase/README.md"
+					},
+					{
+						"Title": "Orator",
+						"Path": "https://fable-retold.github.io/orator/README.md"
+					}
+				]
+			}
+		],
+		"DocFiles": [
+			"README.md",
+			"_cover.md",
+			"_sidebar.md",
+			"architecture.md",
+			"diagram-types.md",
+			"invocation-modes.md",
+			"quickstart.md",
+			"styles.md"
+		]
+	},
+	"Groups": []
+}

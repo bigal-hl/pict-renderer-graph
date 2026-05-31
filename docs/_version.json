@@ -1,0 +1,7 @@
+{
+	"Name": "pict-renderer-graph",
+	"Version": "1.0.0",
+	"Description": "Headless Excalidraw rendering as a fable service. JSON graph in, hand-drawn SVG (or PNG) out. Drives a pre-warmed Chromium for ~30ms-per-diagram throughput. Usable as a library, CLI, or HTTP service.",
+	"GeneratedAt": "2026-05-31T01:44:00.242Z",
+	"GitCommit": "ccfbf12"
+}
