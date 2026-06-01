@@ -95,15 +95,15 @@ curl -X POST http://localhost:7790/render \
 | `sequence` | Actor lanes + vertical lifelines + horizontal messages | API call sequences, protocol diagrams |
 | `mindmap` | Recursive radial tree | Brainstorms, hierarchies, ontologies |
 | `datadict` | Tall entities with multi-line field labels + FK arrows | Data dictionaries, entity relationship diagrams |
-| `mermaid` | Whatever mermaid produces (uses dagre/ELK internally) | Anything mermaid supports — flow, class, state, gantt |
+| `mermaid` | Whatever mermaid produces (uses dagre/ELK internally) | Anything mermaid supports - flow, class, state, gantt |
 
 ## Style profiles
 
 | `style` | Vibe |
 |---|---|
-| `notebook` (default) | Warm-ink hand-drawn — the look of `pict-section-excalidraw`'s Notebook-Default |
+| `notebook` (default) | Warm-ink hand-drawn - the look of `pict-section-excalidraw`'s Notebook-Default |
 | `whiteboard` | Slightly bolder, cross-hatched fills, cooler palette |
-| `clean` | Roughness 0, sharp corners, Helvetica — print-ready |
+| `clean` | Roughness 0, sharp corners, Helvetica - print-ready |
 | `dark` | Charcoal paper, light ink, muted-orange accent |
 
 Inline overrides work: `{ style: { name: 'notebook', RandomSeedSalt: 42 } }` keeps notebook but re-rolls the wobble.
@@ -112,10 +112,10 @@ Inline overrides work: `{ style: { name: 'notebook', RandomSeedSalt: 42 } }` kee
 
 The renderer is built for production load. Out of the box:
 
-- **N-page pool** (`PageCount: 4`) — N concurrent renders run truly in parallel inside one Chromium process.
-- **Two-tier LRU cache** — memory + disk (`~/.cache/pict-renderer-graph/`). Identical input returns in microseconds; survives process restart.
-- **In-flight coalescing** — when 10 callers request the same diagram at the same time, the work runs once and all 10 receive the result.
-- **Bounded queue** (`MaxQueueDepth: 32`) — when overloaded, new requests fail fast with `RendererBusyError` (HTTP: 503 + `Retry-After: 1`) instead of growing memory.
+- **N-page pool** (`PageCount: 4`) - N concurrent renders run truly in parallel inside one Chromium process.
+- **Two-tier LRU cache** - memory + disk (`~/.cache/pict-renderer-graph/`). Identical input returns in microseconds; survives process restart.
+- **In-flight coalescing** - when 10 callers request the same diagram at the same time, the work runs once and all 10 receive the result.
+- **Bounded queue** (`MaxQueueDepth: 32`) - when overloaded, new requests fail fast with `RendererBusyError` (HTTP: 503 + `Retry-After: 1`) instead of growing memory.
 
 ### Throughput at a glance
 
@@ -143,7 +143,7 @@ new PictRendererGraph(fable, {
     CacheEnabled:           true,
     CacheCapacity:          50,       // in-memory LRU entries
     DiskCacheEnabled:       true,
-    DiskCacheDirectory:     null,     // null → ~/.cache/pict-renderer-graph/
+    DiskCacheDirectory:     null,     // null -> ~/.cache/pict-renderer-graph/
     DiskCacheMaxEntries:    500       // LRU-by-mtime sweep above this
 });
 ```
@@ -195,7 +195,7 @@ renderer.styles.register('my-team', { /* full style profile */ });
 # Drop everything
 curl -X DELETE http://127.0.0.1:7790/cache
 
-# Drop by filter — POST /cache/invalidate with body { hash?, style?, type?, all? }
+# Drop by filter - POST /cache/invalidate with body { hash?, style?, type?, all? }
 curl -X POST http://127.0.0.1:7790/cache/invalidate \
      -H 'Content-Type: application/json' \
      -d '{"style":"notebook"}'
@@ -225,10 +225,10 @@ Every rendered SVG carries two metadata blocks:
 </metadata>
 ```
 
-## Gallery — visual regression / DSL exploration
+## Gallery - visual regression / DSL exploration
 
 A non-checked-in fixture gallery exercises every diagram type, style, and edge case in one
-pass — useful for spot-checking aesthetics after a layout change, for feeling out the edges
+pass - useful for spot-checking aesthetics after a layout change, for feeling out the edges
 of the DSL, and as a quick "do all six types still render?" smoke after refactors.
 
 ```bash
@@ -239,10 +239,10 @@ This boots a pre-warmed renderer (4-page pool, cache disabled so every fixture r
 walks every `test/fixtures/gallery/<NN-category>/*.json` (36 fixtures across 8 categories:
 flow, star, sequence, mindmap, datadict, mermaid, styles, edge cases), and writes per-fixture
 `<name>.png` (2× scale) + `<name>.svg` into `test/gallery/<category>/`. It then builds
-`test/gallery/index.html` — open it in a browser to see all renderings as a sortable grid
+`test/gallery/index.html` - open it in a browser to see all renderings as a sortable grid
 of cards, each with the original input JSON in a collapsible `<details>` block.
 
-The whole `test/gallery/` directory is gitignored — regenerate locally any time. Add new
+The whole `test/gallery/` directory is gitignored - regenerate locally any time. Add new
 fixtures to `test/fixtures/gallery/<category>/` and re-run; the generator picks them up
 automatically.
 
@@ -257,7 +257,7 @@ automatically.
 | `05-datadict` | 3 | Entity tables (blog, e-commerce, social) |
 | `06-mermaid` | 5 | Mermaid pass-through (flowchart, sequence, class, state) |
 | `07-styles` | 5 | Same graph in notebook/whiteboard/clean/dark/inline-tuned variants |
-| `08-edges` | 9 | DSL edge cases — single node, cycle, self-loop, unicode/long labels, all kinds, all accents, disconnected components, 30-node stress |
+| `08-edges` | 9 | DSL edge cases - single node, cycle, self-loop, unicode/long labels, all kinds, all accents, disconnected components, 30-node stress |
 
 Bonus: the standards-oriented fixtures (OAuth2 RFC 6749, 12-factor, TCP three-way handshake)
 double as visual regression for "does this still look right against the canonical reference
@@ -289,4 +289,4 @@ See [the plan](../../../.claude/plans/okay-this-is-beautiful-jazzy-flame.md) for
 
 ## License
 
-MIT — see LICENSE.
+MIT - see LICENSE.
