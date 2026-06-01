@@ -155,13 +155,21 @@ function buildIdLabelMap(pMermaid)
 {
 	let tmpMap = {};
 	if (typeof pMermaid !== 'string') { return tmpMap; }
-	let tmpRegExp = /\b([A-Za-z0-9_]+)\s*[\[\(\{]+([^\]\)\}|]+?)[\]\)\}]+/g;
+	// Quoted labels first -- id["...anything, incl. () [] {} ..."] -- the
+	// quotes bound the label so parens/brackets inside it are safe.
+	let tmpQuoted = /\b([A-Za-z0-9_]+)\s*[\[\(\{]+\s*"([^"]*)"/g;
 	let tmpMatch;
-	while ((tmpMatch = tmpRegExp.exec(pMermaid)))
+	while ((tmpMatch = tmpQuoted.exec(pMermaid)))
 	{
-		let tmpId    = tmpMatch[1];
+		if (tmpMatch[2].trim()) { tmpMap[tmpMatch[1]] = tmpMatch[2].trim(); }
+	}
+	// Then unquoted labels -- id[label], id(label), id{label}, id([label]),
+	// id[(label)] -- stopping at the first closing bracket (no nested parens).
+	let tmpUnquoted = /\b([A-Za-z0-9_]+)\s*[\[\(\{]+([^\]\)\}|"]+?)[\]\)\}]+/g;
+	while ((tmpMatch = tmpUnquoted.exec(pMermaid)))
+	{
 		let tmpLabel = tmpMatch[2].replace(/^["']|["']$/g, '').trim();
-		if (tmpLabel) { tmpMap[tmpId] = tmpLabel; }
+		if (tmpLabel && !tmpMap[tmpMatch[1]]) { tmpMap[tmpMatch[1]] = tmpLabel; }
 	}
 	return tmpMap;
 }
@@ -192,7 +200,11 @@ function applyEmphasis(pElements, pEmphasis, pMermaid, pProfile)
 	let tmpStrokeWidth = (pProfile && pProfile.StrokeWidth) || 2;
 
 	let tmpIdLabel = buildIdLabelMap(pMermaid);
-	let tmpNorm = (pStr) => String(pStr == null ? '' : pStr).trim().toLowerCase();
+	// Normalize for matching: drop HTML tags (labels may carry <b>/<i>/<br/>)
+	// and all whitespace (mermaid turns <br/> into newlines in the element
+	// text), then lowercase. Makes "L1" -> "Layer 1<br/>Fable" match the
+	// rendered "Layer 1\nFable" text element.
+	let tmpNorm = (pStr) => String(pStr == null ? '' : pStr).replace(/<[^>]+>/g, '').replace(/\s+/g, '').toLowerCase();
 
 	let tmpTextByLabel = {};
 	let tmpById = {};

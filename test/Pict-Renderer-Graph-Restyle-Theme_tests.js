@@ -135,6 +135,25 @@ suite('PictRendererGraph — emphasis hints', function ()
 		Expect(tmpMap.db).to.equal('Database');
 	});
 
+	test('buildIdLabelMap keeps the full quoted label even with parentheses/br inside', function ()
+	{
+		let tmpMap = buildIdLabelMap('graph TB\n  L1["Layer 1 - Fable (Core Ecosystem)<br/>DI, config"]');
+		Expect(tmpMap.L1).to.equal('Layer 1 - Fable (Core Ecosystem)<br/>DI, config');
+	});
+
+	test('emphasis matches a multi-line, parenthesized label through tag/whitespace normalization', function ()
+	{
+		let tmpMermaid = 'graph TB\n  L1["Layer 1 - Fable (Core Ecosystem)<br/>DI, config"]';
+		let tmpEls =
+		[
+			{ id: 's_l1', type: 'rectangle', strokeColor: '#1B1F23', strokeWidth: 2 },
+			// the rendered text has the <br/> turned into a newline
+			{ id: 't_l1', type: 'text', text: 'Layer 1 - Fable (Core Ecosystem)\nDI, config', containerId: 's_l1', strokeColor: '#1B1F23' }
+		];
+		applyEmphasis(tmpEls, [ { node: 'L1', accent: true } ], tmpMermaid, Profile);
+		Expect(tmpEls.find((e) => e.id === 't_l1').strokeColor).to.equal(Profile.Palette.accent);
+	});
+
 	test('accent + bold by node id colors text + shape and thickens the shape', function ()
 	{
 		let tmpEls = makeScene();
