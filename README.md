@@ -88,6 +88,49 @@ curl -X POST http://localhost:7790/render \
      > diagram.svg
 ```
 
+## Documentation diagrams: folders + hint sidecars
+
+`build` is the documentation workflow.  It renders every `<name>.mmd` under a
+path into `<name>.svg` (themed, theme-adaptive) + `<name>.excalidraw`
+(hand-editable scene), reading an optional `<name>.hints.json` sidecar:
+
+```bash
+npx pict-renderer-graph build docs/diagrams
+```
+
+The `.mmd` is the graph and the source of truth; the sidecar shapes the look
+and the layout:
+
+```jsonc
+{
+  "style":     "notebook",            // notebook | whiteboard | clean | dark
+  "engine":    "dagre",               // dagre (default) | elk
+  "direction": "LR",                  // TB | BT | LR | RL  (overrides the .mmd)
+  "spacing":   { "node": 60, "rank": 100 },
+  "clusters": [
+    { "id": "edge", "label": "Edge", "nodes": ["cdn","lb"], "visible": true },
+    { "id": "core", "nodes": ["api","db"], "visible": false }   // group only, no box
+  ],
+  "order":    [ ["auth","api","db"] ],   // best-effort left-to-right
+  "emphasis": [
+    { "node": "db", "accent": true, "bold": true },
+    { "nodes": ["legacy"], "dim": true }
+  ],
+  "background":     false,            // transparent (default) -- blends with the page
+  "themeVariables": true             // emit var(--diagram-*) theme-adaptive SVG (default)
+}
+```
+
+- **direction / engine / spacing / clusters** are translated into the mermaid
+  the engine lays out, so they are honored.  An invisible cluster groups its
+  nodes for layout without drawing a box.
+- **order** appends invisible edges to bias dagre's sibling ordering -- a
+  nudge, not a hard constraint ("X directly left of Y" is best-effort).
+- **emphasis** repaints a node (matched by short id or visible label) after
+  layout: `accent`, `dim`, `bold`.  Geometry is never touched.
+- Output is deterministic: editing the `.mmd` and re-running gives a stable
+  layout, so adding a node is just an edit plus a rebuild.
+
 ## Diagram types
 
 | `type` | Layout | Best for |

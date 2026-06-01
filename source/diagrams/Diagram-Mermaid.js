@@ -17,6 +17,7 @@
  */
 
 const libRestyle = require('../Pict-Renderer-Graph-Restyle.js');
+const libHints   = require('../Pict-Renderer-Graph-Hints.js');
 
 module.exports =
 {
@@ -55,7 +56,12 @@ module.exports =
 			return { elements: tmpElements, files: tmpFiles };
 		};
 
-		let tmpInput = { mermaid: pGraph.mermaid, options: pGraph.mermaidOptions || {} };
+		// Translate layout-intent hints into the mermaid we feed the engine
+		// (direction, engine, spacing, clusters -> subgraphs, order). Emphasis
+		// is applied later, post-layout. tmpHinted.clusters drives the
+		// post-layout cluster cleanup below.
+		let tmpHinted = libHints.applyLayoutHints(pGraph.mermaid, pGraph);
+		let tmpInput = { mermaid: tmpHinted.mermaid, options: pGraph.mermaidOptions || {} };
 		pBrowser.evaluateInPage(tmpEvalFn, tmpInput, (pErr, pResult) =>
 		{
 			if (pErr) return fCallback(pErr);
@@ -79,6 +85,10 @@ module.exports =
 			{
 				libRestyle.restyleElements(tmpElements, pProfile);
 			}
+			// Cluster frames: quiet the visible ones (dashed deemphasis) and
+			// strip the invisible ones (they existed only to group the layout).
+			// May return a filtered array, so reassign.
+			tmpElements = libHints.applyClusterStyling(tmpElements, tmpHinted.clusters, pProfile);
 			// Emphasis hints (accent / dim / bold a node by id or label) ride
 			// on the graph input; applied after the base restyle so they win.
 			if (Array.isArray(pGraph.emphasis) && pGraph.emphasis.length)

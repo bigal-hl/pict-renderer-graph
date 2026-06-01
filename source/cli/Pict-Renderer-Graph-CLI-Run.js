@@ -355,6 +355,12 @@ function buildOne(pRenderer, pMmdPath, pArgs, fCallback)
 	};
 	if (Array.isArray(tmpHints.emphasis)) { tmpGraph.emphasis = tmpHints.emphasis; }
 	if (tmpHints.restyle === false)       { tmpGraph.restyle = false; }
+	// Layout-intent hints -- the handler translates these into the mermaid.
+	if (tmpHints.direction)               { tmpGraph.direction = tmpHints.direction; }
+	if (tmpHints.engine)                  { tmpGraph.engine    = tmpHints.engine; }
+	if (tmpHints.spacing)                 { tmpGraph.spacing   = tmpHints.spacing; }
+	if (Array.isArray(tmpHints.clusters)) { tmpGraph.clusters  = tmpHints.clusters; }
+	if (Array.isArray(tmpHints.order))    { tmpGraph.order     = tmpHints.order; }
 
 	// Docs want theme-adaptive output by default; opt out per-diagram with
 	// "themeVariables": false in the hints, or globally with --no-theme-variables.
