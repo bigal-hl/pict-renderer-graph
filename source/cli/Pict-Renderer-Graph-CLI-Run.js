@@ -360,7 +360,12 @@ function buildOne(pRenderer, pMmdPath, pArgs, fCallback)
 	// "themeVariables": false in the hints, or globally with --no-theme-variables.
 	let tmpThemeVariables = (tmpHints.themeVariables !== false) && (pArgs.flags['theme-variables'] !== false);
 
-	pRenderer.render(tmpGraph, { format: 'svg', includeSource: true, themeVariables: tmpThemeVariables }, (pErr, pOut) =>
+	// Docs diagrams default to a transparent background so they blend with the
+	// page in any theme (the inlined ink outlines adapt via --diagram-ink);
+	// opt back in with "background": true in the hints.
+	let tmpBackground = (tmpHints.background === true);
+
+	pRenderer.render(tmpGraph, { format: 'svg', includeSource: true, themeVariables: tmpThemeVariables, background: tmpBackground }, (pErr, pOut) =>
 	{
 		if (pErr) { return fCallback(pErr); }
 		let tmpSvgPath     = pMmdPath.replace(/\.mmd$/, '.svg');
