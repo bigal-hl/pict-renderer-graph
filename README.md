@@ -1,5 +1,7 @@
 # pict-renderer-graph
 
+> **[Read the pict-renderer-graph Documentation](https://fable-retold.github.io/pict-renderer-graph/)**
+
 > Headless Excalidraw rendering as a fable service. JSON in, hand-drawn SVG (or PNG) out.
 
 `pict-section-excalidraw` proved that Excalidraw can be driven programmatically. **pict-renderer-graph** packages that capability as a first-class server-side service: a pre-warmed Chromium, a unified graph-input schema, and three invocation modes (library / CLI / HTTP).
