@@ -30,6 +30,7 @@ const libStyleRegistry   = require('./styles/Style-Registry.js');
 const libCache           = require('./cache/Pict-Renderer-Graph-Cache.js');
 const libCoalescer       = require('./cache/Pict-Renderer-Graph-Coalescer.js');
 const { RendererBusyError } = require('./Pict-Renderer-Graph-Errors.js');
+const libThemeSVG           = require('./Pict-Renderer-Graph-Theme-SVG.js');
 const _DefaultConfiguration = require('./Pict-Renderer-Graph-DefaultConfiguration.js');
 
 const _NS_URI = 'https://fable-retold.github.io/pict-renderer-graph/ns/v1';
@@ -89,7 +90,8 @@ class PictRendererGraph extends libFableServiceProviderBase
 	 *
 	 * @param {object} pGraph  - { type, title?, style?, nodes?, edges?, ... }
 	 * @param {object} pOpts   - { format: 'svg'|'png', includeSource?, embedScene?,
-	 *                            scale?, padding?, background?, darkMode? }
+	 *                            scale?, padding?, background?, darkMode?,
+	 *                            themeVariables? (rewrite palette -> CSS vars) }
 	 * @param {Function} fCallback - (pErr, { svg|png, mime, scene, source })
 	 */
 	render(pGraph, pOpts, fCallback)
@@ -125,7 +127,7 @@ class PictRendererGraph extends libFableServiceProviderBase
 			if (pCached)
 			{
 				// pCached already carries cacheHit:'memory'|'disk' from the cache layer.
-				return tmpCb(null, Object.assign({}, pCached, { source: pGraph }));
+				return tmpCb(null, _applyThemeVariables(Object.assign({}, pCached, { source: pGraph }), tmpOpts, tmpProfile));
 			}
 
 			// Cache miss — coalesce concurrent identical requests.
@@ -147,7 +149,7 @@ class PictRendererGraph extends libFableServiceProviderBase
 				// Cache hit flag is null for fresh renders (or the leader
 				// of a coalesced group); followers will see the result
 				// from the leader's render — also no cacheHit.
-				return tmpCb(null, pResult);
+				return tmpCb(null, _applyThemeVariables(pResult, tmpOpts, tmpProfile));
 			});
 		});
 	}
@@ -359,6 +361,21 @@ function _injectSourceMetadata(pSvgString, pGraph)
 	}
 	// Pathologically malformed SVG — prepend.
 	return '<metadata>' + tmpBlock + '</metadata>' + pSvgString;
+}
+
+/**
+ * Apply the CSS-variable theme rewrite to a result's SVG when the caller asked
+ * for it (pOpts.themeVariables).  Runs on the way OUT of render() — after the
+ * cache hit-or-miss — so it post-processes both fresh and cached SVGs without
+ * being baked into (or doubling) the cache.  No-op for png or when not asked.
+ */
+function _applyThemeVariables(pResult, pOpts, pProfile)
+{
+	if (pResult && pOpts && pOpts.themeVariables && (typeof pResult.svg === 'string'))
+	{
+		return Object.assign({}, pResult, { svg: libThemeSVG.themeifySVG(pResult.svg, pProfile) });
+	}
+	return pResult;
 }
 
 module.exports = PictRendererGraph;

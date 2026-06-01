@@ -9,11 +9,14 @@
  *
  *   { type: 'mermaid', mermaid: '<mermaid source>', title?, style? }
  *
- * The returned scene reuses Excalidraw's internal layout — `style` only
- * affects the post-export theme tokens (background color, etc.).
- * Roughness / palette / font don't apply since mermaid-to-excalidraw
- * builds its own elements with its own defaults.
+ * The returned scene reuses mermaid's internal layout (dagre/ELK) for
+ * structure.  By default the style profile is then applied over the result
+ * (see Pict-Renderer-Graph-Restyle.js) so roughness / palette / font / seed
+ * match the hand-drawn look — mermaid owns geometry, the profile owns ink.
+ * Pass { restyle: false } to keep raw mermaid-to-excalidraw output.
  */
+
+const libRestyle = require('../Pict-Renderer-Graph-Restyle.js');
 
 module.exports =
 {
@@ -68,6 +71,15 @@ module.exports =
 					tmpElement.text = tmpElement.text.replace(/<br\s*\/?>/gi, '\n');
 				}
 			}
+			// Apply the style profile's ink over mermaid's structure so the
+			// diagram takes on the themed hand-drawn look.  Mermaid keeps owning
+			// geometry; we override paint / roughness / font / seed.  Opt out
+			// with { restyle: false } for raw mermaid-to-excalidraw output.
+			if (pGraph.restyle !== false)
+			{
+				libRestyle.restyleElements(tmpElements, pProfile);
+			}
+
 			// Build the scene with the style profile's appState.  Mermaid
 			// owns the structure, we own the canvas-level theme tokens.
 			let tmpAppState = Object.assign({}, (pProfile && pProfile.AppState) || {});
