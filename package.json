@@ -53,6 +53,7 @@
 		]
 	},
 	"dependencies": {
+		"@dagrejs/dagre": "^3.0.0",
 		"fable": "^3.1.75",
 		"fable-serviceproviderbase": "^3.0.19",
 		"lru-cache": "^11.5.0",

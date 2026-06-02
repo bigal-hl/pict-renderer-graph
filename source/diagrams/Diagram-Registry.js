@@ -25,8 +25,10 @@
 const _Registry =
 {
 	'flow':     require('./Diagram-Flow.js'),
+	'flowgraph': require('./Diagram-FlowGraph.js'),
 	'star':     require('./Diagram-Star.js'),
 	'sequence': require('./Diagram-Sequence.js'),
+	'seqgraph': require('./Diagram-SequenceGraph.js'),
 	'mindmap':  require('./Diagram-MindMap.js'),
 	'datadict': require('./Diagram-DataDictionary.js'),
 	'mermaid':  require('./Diagram-Mermaid.js')

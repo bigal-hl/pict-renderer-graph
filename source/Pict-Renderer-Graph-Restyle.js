@@ -353,43 +353,141 @@ const _SideLeft   = { dx: -1, dy: 0 };
 const _SideTop    = { dx: 0,  dy: -1 };
 const _SideBottom = { dx: 0,  dy: 1 };
 
-/**
- * Infer which edge of a box an anchor point sits on and return that edge's
- * outward normal. Mermaid attaches connector endpoints at (or just outside) an
- * edge midpoint, so the nearest edge is the side the connector should depart /
- * approach along.
- */
-function _inferSide(pX, pY, pBox)
+// A point ALONG a box edge, given that edge's outward normal (_SideRight, ...)
+// and a fraction (0..1) across the edge. Horizontal edges (top/bottom) vary in
+// X; vertical edges (left/right) vary in Y. Fraction 0.5 is the midpoint.
+function _edgeAnchor(pBox, pSide, pFraction)
 {
 	let tmpX = (typeof pBox.x === 'number') ? pBox.x : 0;
 	let tmpY = (typeof pBox.y === 'number') ? pBox.y : 0;
 	let tmpW = pBox.width  || 0;
 	let tmpH = pBox.height || 0;
-	let tmpToLeft   = Math.abs(pX - tmpX);
-	let tmpToRight  = Math.abs(pX - (tmpX + tmpW));
-	let tmpToTop    = Math.abs(pY - tmpY);
-	let tmpToBottom = Math.abs(pY - (tmpY + tmpH));
-	let tmpMin = Math.min(tmpToLeft, tmpToRight, tmpToTop, tmpToBottom);
-	if (tmpMin === tmpToRight)  { return _SideRight; }
-	if (tmpMin === tmpToLeft)   { return _SideLeft; }
-	if (tmpMin === tmpToBottom) { return _SideBottom; }
-	return _SideTop;
+	let tmpF = pFraction;
+	if (pSide.dx > 0) { return { x: tmpX + tmpW,      y: tmpY + tmpH * tmpF }; }   // right edge, vary Y
+	if (pSide.dx < 0) { return { x: tmpX,             y: tmpY + tmpH * tmpF }; }   // left edge, vary Y
+	if (pSide.dy > 0) { return { x: tmpX + tmpW * tmpF, y: tmpY + tmpH }; }        // bottom edge, vary X
+	return { x: tmpX + tmpW * tmpF, y: tmpY };                                     // top edge, vary X
+}
+
+// Midpoint of a box edge -- the single-connector case of _edgeAnchor.
+function _edgeMidpoint(pBox, pSide)
+{
+	return _edgeAnchor(pBox, pSide, 0.5);
+}
+
+// Short name for a side, so connectors landing on the same physical edge of the
+// same box can be grouped (box id + side name) and fanned out across it.
+function _sideName(pSide)
+{
+	if (pSide.dx > 0) { return 'R'; }
+	if (pSide.dx < 0) { return 'L'; }
+	if (pSide.dy > 0) { return 'B'; }
+	return 'T';
+}
+
+// When several connectors share one edge, spread their anchors across the
+// central band of that edge (leaving the rounded corners clear) rather than
+// stacking them on the midpoint.
+const _PortBandLo = 0.18;
+const _PortBandHi = 0.82;
+
+// Cubic bezier point at t -- B(t) = (1-t)^3 P0 + 3(1-t)^2 t P1 + 3(1-t) t^2 P2 +
+// t^3 P3 (ported from pict-section-flow's PathGenerator.evaluateCubicBezier).
+function _cubicBezier(pP0, pP1, pP2, pP3, pT)
+{
+	let tmpOMT  = 1 - pT;
+	let tmpOMT2 = tmpOMT * tmpOMT;
+	let tmpOMT3 = tmpOMT2 * tmpOMT;
+	let tmpT2   = pT * pT;
+	let tmpT3   = tmpT2 * pT;
+	return {
+		x: tmpOMT3 * pP0.x + 3 * tmpOMT2 * pT * pP1.x + 3 * tmpOMT * tmpT2 * pP2.x + tmpT3 * pP3.x,
+		y: tmpOMT3 * pP0.y + 3 * tmpOMT2 * pT * pP1.y + 3 * tmpOMT * tmpT2 * pP2.y + tmpT3 * pP3.y
+	};
+}
+
+const _BezierSteps = 18;
+
+/**
+ * Build a smooth connector polyline between two anchored edges, reusing
+ * pict-section-flow's directional-geometry recipe (computeDirectionalGeometry):
+ * a short straight stub off each edge along its outward normal, then a cubic
+ * bezier whose two control points ALSO sit along those normals -- so the curve
+ * leaves the start edge and arrives at the end edge exactly perpendicular, and
+ * (because both control points pull the curve back along the normal) it never
+ * bows past its own endpoints. That last property is the whole point: two
+ * connectors converging on one box stay within their own lanes instead of
+ * crossing. Excalidraw's roundness:2 Catmull-Rom can't do this -- it derives
+ * tangents from neighbouring points and overshoots -- so we sample the bezier
+ * into a dense polyline and emit it as straight points (the SVG export draws
+ * linear elements straight from `points`, so the sampled curve is what renders).
+ *
+ * @returns {Array<{x,y}>} absolute points: start, stub, bezier samples, end.
+ */
+function _connectorPoints(pStart, pSideA, pEnd, pSideB)
+{
+	let tmpRaw      = Math.sqrt(Math.pow(pEnd.x - pStart.x, 2) + Math.pow(pEnd.y - pStart.y, 2));
+	let tmpStraight = Math.max(6, Math.min(16, tmpRaw * 0.22));
+
+	let tmpDepartX   = pStart.x + pSideA.dx * tmpStraight;
+	let tmpDepartY   = pStart.y + pSideA.dy * tmpStraight;
+	let tmpApproachX = pEnd.x   + pSideB.dx * tmpStraight;
+	let tmpApproachY = pEnd.y   + pSideB.dy * tmpStraight;
+
+	let tmpDX   = Math.abs(tmpApproachX - tmpDepartX);
+	let tmpDY   = Math.abs(tmpApproachY - tmpDepartY);
+	let tmpDist = Math.sqrt(tmpDX * tmpDX + tmpDY * tmpDY);
+	let tmpBaseOffset = Math.max(Math.min(tmpDist * 0.4, 180), 30);
+
+	// Curve offset adapts to how the two edges relate: facing edges get a gentle
+	// offset scaled by the inline distance; same-axis-not-facing edges need a
+	// wider one so the path doesn't collapse; perpendicular edges a moderate one.
+	let tmpSameAxis = (pSideA.dx !== 0 && pSideB.dx !== 0) || (pSideA.dy !== 0 && pSideB.dy !== 0);
+	let tmpFacing = false;
+	if (tmpSameAxis)
+	{
+		if (pSideA.dx === 1 && pSideB.dx === -1 && pEnd.x >= pStart.x)      { tmpFacing = true; }
+		else if (pSideA.dx === -1 && pSideB.dx === 1 && pEnd.x <= pStart.x) { tmpFacing = true; }
+		else if (pSideA.dy === 1 && pSideB.dy === -1 && pEnd.y >= pStart.y) { tmpFacing = true; }
+		else if (pSideA.dy === -1 && pSideB.dy === 1 && pEnd.y <= pStart.y) { tmpFacing = true; }
+	}
+	let tmpOffset;
+	if (tmpFacing)        { let tmpInline = (pSideA.dx !== 0) ? tmpDX : tmpDY; tmpOffset = Math.max(tmpInline * 0.35, 24); }
+	else if (tmpSameAxis) { tmpOffset = Math.max(tmpBaseOffset, 60); }
+	else                  { tmpOffset = Math.max(tmpBaseOffset * 0.8, 36); }
+
+	let tmpP0 = { x: tmpDepartX,                       y: tmpDepartY };
+	let tmpP1 = { x: tmpDepartX + pSideA.dx * tmpOffset, y: tmpDepartY + pSideA.dy * tmpOffset };
+	let tmpP2 = { x: tmpApproachX + pSideB.dx * tmpOffset, y: tmpApproachY + pSideB.dy * tmpOffset };
+	let tmpP3 = { x: tmpApproachX,                     y: tmpApproachY };
+
+	let tmpPts = [ { x: pStart.x, y: pStart.y } ];
+	for (let s = 0; s <= _BezierSteps; s++) { tmpPts.push(_cubicBezier(tmpP0, tmpP1, tmpP2, tmpP3, s / _BezierSteps)); }
+	tmpPts.push({ x: pEnd.x, y: pEnd.y });
+	return tmpPts;
 }
 
 /**
  * Re-route bound connectors so they leave and enter their boxes perpendicular
- * to the edge -- the clean-landing trick pict-section-flow's PathGenerator uses
- * (a short departure/approach stub along each side's outward normal, then a
- * smooth curve between). This replaces mermaid-to-excalidraw's dagre spline --
- * whose tail often curls into the target at a steep, swooping angle -- with
- * start -> depart -> approach -> end drawn as a rounded (type 2) curve, so the
- * arrowhead always meets its box square-on.
+ * to the edge that FACES the other box -- the clean-landing trick
+ * pict-section-flow's PathGenerator uses (a short departure/approach stub along
+ * each side's outward normal, then a smooth curve between).
  *
- * Mermaid still owns WHERE each endpoint attaches (we keep its first/last
- * points and the bindings); we only fix the ANGLE of departure and arrival and
- * the shape of the path between. Excalidraw's SVG export draws a linear
- * element straight from its `points`, so these waypoints are exactly what
- * renders; the retained bindings keep the scene hand-editable.
+ * The side is chosen from the direction between the two box centers, NOT from
+ * where mermaid attached the endpoint. mermaid's dagre frequently attaches a
+ * hub's edges to its top and bottom even when every target is off to one side,
+ * so the connectors depart vertically and swoop back across other boxes (the
+ * meadow-endpoints fan is the worst case). Choosing the facing edge makes a
+ * left-right fan depart rightward from the hub and land on each target's left
+ * edge; the choice is biased toward the horizontal axis so near-diagonal
+ * targets still attach to the side rather than flipping to top/bottom. Each
+ * endpoint anchors at its chosen edge's midpoint, then start -> depart ->
+ * approach -> end is drawn as a rounded (type 2) curve so the arrowhead always
+ * meets its box square-on.
+ *
+ * The bindings are kept (the scene stays hand-editable); Excalidraw's SVG
+ * export draws a linear element straight from its `points`, so these computed
+ * waypoints are exactly what renders.
  *
  * @param {Array}  pElements - excalidraw elements (mutated in place)
  * @param {object} pProfile  - resolved style profile (reserved; parity with siblings)
@@ -405,6 +503,16 @@ function rerouteArrows(pElements, pProfile)
 		if (pElements[i] && pElements[i].id) { tmpById[pElements[i].id] = pElements[i]; }
 	}
 
+	// Pass 1 -- for every eligible connector, choose the facing edges from how
+	// the boxes sit relative to each other, using their EXTENTS (not just
+	// centers). Horizontal separation wins first: a target entirely off to one
+	// side attaches left/right (so a hub whose targets are stacked in a column
+	// to the right fans out from its right edge). Only when the boxes overlap
+	// horizontally do we go vertical (a target entirely above/below -- e.g. two
+	// boxes converging down onto one below them). If they overlap on both axes,
+	// fall back to the dominant center direction. The anchor POINT on each edge
+	// is deferred to pass 2 so connectors sharing an edge can fan out.
+	let tmpRoutes = [];
 	for (let i = 0; i < pElements.length; i++)
 	{
 		let tmpArrow = pElements[i];
@@ -419,33 +527,90 @@ function rerouteArrows(pElements, pProfile)
 		// unbound connectors and self-loops are left exactly as mermaid drew them.
 		if (!tmpBoxA || !tmpBoxB || tmpBoxA === tmpBoxB) { continue; }
 
-		let tmpX = tmpArrow.x || 0;
-		let tmpY = tmpArrow.y || 0;
-		let tmpFirst = tmpArrow.points[0];
-		let tmpLast  = tmpArrow.points[tmpArrow.points.length - 1];
-		let tmpStartX = tmpX + tmpFirst[0];
-		let tmpStartY = tmpY + tmpFirst[1];
-		let tmpEndX   = tmpX + tmpLast[0];
-		let tmpEndY   = tmpY + tmpLast[1];
+		let tmpAL = tmpBoxA.x || 0, tmpAR = (tmpBoxA.x || 0) + (tmpBoxA.width  || 0);
+		let tmpAT = tmpBoxA.y || 0, tmpAB = (tmpBoxA.y || 0) + (tmpBoxA.height || 0);
+		let tmpBL = tmpBoxB.x || 0, tmpBR = (tmpBoxB.x || 0) + (tmpBoxB.width  || 0);
+		let tmpBT = tmpBoxB.y || 0, tmpBB = (tmpBoxB.y || 0) + (tmpBoxB.height || 0);
 
-		let tmpSideA = _inferSide(tmpStartX, tmpStartY, tmpBoxA);
-		let tmpSideB = _inferSide(tmpEndX,   tmpEndY,   tmpBoxB);
+		let tmpSideA, tmpSideB;
+		if (tmpBL >= tmpAR)        { tmpSideA = _SideRight;  tmpSideB = _SideLeft; }    // target entirely right
+		else if (tmpBR <= tmpAL)  { tmpSideA = _SideLeft;   tmpSideB = _SideRight; }   // target entirely left
+		else if (tmpBT >= tmpAB)  { tmpSideA = _SideBottom; tmpSideB = _SideTop; }     // target entirely below
+		else if (tmpBB <= tmpAT)  { tmpSideA = _SideTop;    tmpSideB = _SideBottom; }  // target entirely above
+		else
+		{
+			// Overlapping on both axes -- pick the dominant center-to-center axis.
+			let tmpDX = (tmpBL + tmpBR) / 2 - (tmpAL + tmpAR) / 2;
+			let tmpDY = (tmpBT + tmpBB) / 2 - (tmpAT + tmpAB) / 2;
+			if (Math.abs(tmpDX) >= Math.abs(tmpDY))
+			{
+				tmpSideA = (tmpDX >= 0) ? _SideRight : _SideLeft;
+				tmpSideB = (tmpDX >= 0) ? _SideLeft : _SideRight;
+			}
+			else
+			{
+				tmpSideA = (tmpDY >= 0) ? _SideBottom : _SideTop;
+				tmpSideB = (tmpDY >= 0) ? _SideTop : _SideBottom;
+			}
+		}
 
-		let tmpDX = tmpEndX - tmpStartX;
-		let tmpDY = tmpEndY - tmpStartY;
-		let tmpDist = Math.sqrt(tmpDX * tmpDX + tmpDY * tmpDY);
-		// Stub length: long enough to set a clean perpendicular tangent, short
-		// enough not to overshoot a tight gap -- about a quarter of the span,
-		// clamped (mirrors PathGenerator's modest fixed departure distance).
-		let tmpStub = Math.max(8, Math.min(26, tmpDist * 0.25));
+		tmpRoutes.push({ arrow: tmpArrow, boxA: tmpBoxA, boxB: tmpBoxB, sideA: tmpSideA, sideB: tmpSideB });
+	}
 
-		let tmpAbs =
-		[
-			{ x: tmpStartX,                          y: tmpStartY },
-			{ x: tmpStartX + tmpSideA.dx * tmpStub,  y: tmpStartY + tmpSideA.dy * tmpStub },
-			{ x: tmpEndX   + tmpSideB.dx * tmpStub,  y: tmpEndY   + tmpSideB.dy * tmpStub },
-			{ x: tmpEndX,                            y: tmpEndY }
-		];
+	// Pass 2 -- group connector endpoints by the physical edge they land on
+	// (box id + side) and distribute their anchors across that edge instead of
+	// stacking every one on the midpoint. Without this, two arrows converging on
+	// the same side both target the edge center and their curves cross as they
+	// meet (the layer4 restify+static -> core funnel). Ordering each group by
+	// the OPPOSITE endpoint's position along the edge axis makes the leftmost
+	// source land leftmost (topmost -> topmost on a vertical edge), so the fan
+	// opens cleanly and never crosses.
+	let tmpPorts = {};
+	let tmpRegister = (pBox, pSide, pRoute, pWhich) =>
+	{
+		let tmpKey   = (pBox.id || '?') + '|' + _sideName(pSide);
+		let tmpHoriz = (pSide.dy !== 0);   // top/bottom edges vary in X
+		let tmpOther = (pWhich === 'A') ? pRoute.boxB : pRoute.boxA;
+		let tmpOrder = tmpHoriz
+			? ((tmpOther.x || 0) + (tmpOther.width  || 0) / 2)
+			: ((tmpOther.y || 0) + (tmpOther.height || 0) / 2);
+		(tmpPorts[tmpKey] = tmpPorts[tmpKey] || []).push({ box: pBox, side: pSide, route: pRoute, which: pWhich, order: tmpOrder });
+	};
+	for (let i = 0; i < tmpRoutes.length; i++)
+	{
+		tmpRegister(tmpRoutes[i].boxA, tmpRoutes[i].sideA, tmpRoutes[i], 'A');
+		tmpRegister(tmpRoutes[i].boxB, tmpRoutes[i].sideB, tmpRoutes[i], 'B');
+	}
+	let tmpPortKeys = Object.keys(tmpPorts);
+	for (let k = 0; k < tmpPortKeys.length; k++)
+	{
+		let tmpGroup = tmpPorts[tmpPortKeys[k]];
+		// Stable order by the opposite endpoint, tie-broken by id so the layout
+		// is deterministic regardless of element array order.
+		tmpGroup.sort((a, b) => (a.order - b.order) || (a.route.arrow.id < b.route.arrow.id ? -1 : 1));
+		let tmpCount = tmpGroup.length;
+		for (let g = 0; g < tmpCount; g++)
+		{
+			let tmpEntry = tmpGroup[g];
+			let tmpFraction = (tmpCount === 1)
+				? 0.5
+				: (_PortBandLo + (_PortBandHi - _PortBandLo) * (g + 1) / (tmpCount + 1));
+			let tmpAnchor = _edgeAnchor(tmpEntry.box, tmpEntry.side, tmpFraction);
+			if (tmpEntry.which === 'A') { tmpEntry.route.startAnchor = tmpAnchor; }
+			else { tmpEntry.route.endAnchor = tmpAnchor; }
+		}
+	}
+
+	// Pass 3 -- draw each connector as a perpendicular stub off each anchored
+	// edge joined by a non-overshooting cubic bezier (sampled to a polyline).
+	for (let i = 0; i < tmpRoutes.length; i++)
+	{
+		let tmpRoute = tmpRoutes[i];
+		let tmpArrow = tmpRoute.arrow;
+		let tmpStart = tmpRoute.startAnchor;
+		let tmpEnd   = tmpRoute.endAnchor;
+
+		let tmpAbs = _connectorPoints(tmpStart, tmpRoute.sideA, tmpEnd, tmpRoute.sideB);
 
 		let tmpMinX = Infinity, tmpMinY = Infinity, tmpMaxX = -Infinity, tmpMaxY = -Infinity;
 		for (let p = 0; p < tmpAbs.length; p++)
@@ -453,15 +618,15 @@ function rerouteArrows(pElements, pProfile)
 			tmpMinX = Math.min(tmpMinX, tmpAbs[p].x); tmpMaxX = Math.max(tmpMaxX, tmpAbs[p].x);
 			tmpMinY = Math.min(tmpMinY, tmpAbs[p].y); tmpMaxY = Math.max(tmpMaxY, tmpAbs[p].y);
 		}
-		// Re-anchor at the (unchanged) start point; express the rest relative.
-		tmpArrow.x = tmpStartX;
-		tmpArrow.y = tmpStartY;
-		tmpArrow.points = tmpAbs.map((pt) => [ pt.x - tmpStartX, pt.y - tmpStartY ]);
+		// Re-anchor at the start edge anchor; express the rest relative.
+		tmpArrow.x = tmpStart.x;
+		tmpArrow.y = tmpStart.y;
+		tmpArrow.points = tmpAbs.map((pt) => [ pt.x - tmpStart.x, pt.y - tmpStart.y ]);
 		tmpArrow.width  = tmpMaxX - tmpMinX;
 		tmpArrow.height = tmpMaxY - tmpMinY;
-		// Smooth (Catmull-Rom) curve through the four points: perpendicular
-		// tangents at both ends, a gentle bow between -- no dagre swoop.
-		tmpArrow.roundness = { type: 2 };
+		// The points already trace the smooth bezier; keep them as a straight
+		// polyline (no Catmull-Rom rounding, which would re-introduce overshoot).
+		tmpArrow.roundness = null;
 	}
 
 	return pElements;

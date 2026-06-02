@@ -23,6 +23,8 @@
  *
  * Cache key composition (hashRenderKey):
  *   SHA-256 over a canonicalized JSON blob built from:
+ *     - renderer      (package version + _RENDER_ALGORITHM_VERSION) so a change
+ *                     to the rendering code invalidates entries for unchanged input
  *     - graph         (recursively key-sorted)
  *     - format        (svg | png)
  *     - scale, padding, background, embedScene, includeSource
@@ -48,6 +50,17 @@ const { LRUCache } = require('lru-cache');
 const _DEFAULT_CAPACITY      = 50;
 const _DEFAULT_DISK_MAX      = 500;
 const _DEFAULT_DISK_DIR_NAME = 'pict-renderer-graph';
+
+// The cache key is hashed over the graph + opts + profile, but NOT over the
+// rendering code -- so a change to scene generation (layout, edge routing,
+// label emission, ...) would otherwise be masked by a stale hit on the same
+// source. Fold the package version plus a hand-bumped algorithm version into
+// the key so any such change invalidates prior entries automatically. Bump
+// _RENDER_ALGORITHM_VERSION whenever the produced scene/SVG changes for
+// unchanged input (the package version covers released upgrades; the constant
+// covers in-development iterations between publishes).
+const _PACKAGE_VERSION          = (() => { try { return require('../../package.json').version; } catch (pErr) { return '0'; } })();
+const _RENDER_ALGORITHM_VERSION = 2;   // 2: bezier-sampled, port-distributed edge routing
 
 class PictRendererGraphCache
 {
@@ -91,6 +104,7 @@ class PictRendererGraphCache
 		let tmpProfile = pResolvedProfile || {};
 		let tmpKey =
 		{
+			renderer:      _PACKAGE_VERSION + ':' + _RENDER_ALGORITHM_VERSION,
 			graph:         _canonicalize(pGraph || {}),
 			format:        tmpOpts.format || 'svg',
 			scale:         (tmpOpts.scale !== undefined)   ? tmpOpts.scale   : 1,

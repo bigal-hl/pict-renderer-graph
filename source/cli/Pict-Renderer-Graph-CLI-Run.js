@@ -347,9 +347,18 @@ function buildOne(pRenderer, pMmdPath, pArgs, fCallback)
 		catch (pErr) { return fCallback(new Error(tmpHintsPath + ': ' + pErr.message)); }
 	}
 
+	// Flowcharts and sequence diagrams render natively (our own parse + layout +
+	// emit); other mermaid types (class/state/ER/gantt) stay on
+	// mermaid-to-excalidraw. Force the choice per-diagram with
+	// "renderer": "flowgraph" | "seqgraph" | "mermaid" in the hints.
+	let tmpIsFlowchart = /^\s*(?:graph|flowchart)\b/m.test(tmpSource);
+	let tmpIsSequence  = /^\s*sequenceDiagram\b/m.test(tmpSource);
+	let tmpRenderer = tmpHints.renderer ||
+		(tmpIsFlowchart ? 'flowgraph' : tmpIsSequence ? 'seqgraph' : 'mermaid');
+
 	let tmpGraph =
 	{
-		type:    'mermaid',
+		type:    tmpRenderer,
 		mermaid: tmpSource,
 		style:   tmpHints.style || pArgs.flags.style || 'notebook'
 	};

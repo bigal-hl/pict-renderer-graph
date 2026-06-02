@@ -240,12 +240,14 @@ suite('PictRendererGraph — arrow re-routing (perpendicular landings)', functio
 		];
 	}
 
-	test('adds a perpendicular departure + approach stub (4 waypoints, square landing)', function ()
+	test('adds a perpendicular departure + approach stub (sampled curve, square landing)', function ()
 	{
 		let tmpEls = makeHorizontalScene();
 		rerouteArrows(tmpEls, null);
 		let tmpArrow = tmpEls.find((e) => e.id === 'e1');
-		Expect(tmpArrow.points.length).to.equal(4);
+		let tmpN = tmpArrow.points.length;
+		// Re-routed into a densely-sampled curve, not a 2-point straight line.
+		Expect(tmpN).to.be.above(4);
 		// First waypoint is the (unchanged) start anchor.
 		Expect(tmpArrow.points[0][0]).to.equal(0);
 		Expect(tmpArrow.points[0][1]).to.equal(0);
@@ -254,17 +256,19 @@ suite('PictRendererGraph — arrow re-routing (perpendicular landings)', functio
 		Expect(tmpArrow.points[1][1]).to.equal(0);
 		// Approach reaches B's left edge horizontally -- last segment is flat in
 		// y, so the arrowhead meets the vertical edge square-on (no swoop).
-		Expect(tmpArrow.points[3][1]).to.equal(tmpArrow.points[2][1]);
+		Expect(tmpArrow.points[tmpN - 1][1]).to.equal(tmpArrow.points[tmpN - 2][1]);
 		// End anchor lands at B's left-edge midpoint (abs 200,30 -> rel 100,0).
-		Expect(tmpArrow.points[3][0]).to.equal(100);
-		Expect(tmpArrow.points[3][1]).to.equal(0);
+		Expect(tmpArrow.points[tmpN - 1][0]).to.equal(100);
+		Expect(tmpArrow.points[tmpN - 1][1]).to.equal(0);
 	});
 
-	test('draws the re-routed connector as a smooth (type 2) curve', function ()
+	test('emits the connector as a straight-sampled polyline (no Catmull-Rom rounding)', function ()
 	{
+		// The sampled points already trace the bezier; rounding them would
+		// re-introduce the tangent overshoot the bezier control points avoid.
 		let tmpEls = makeHorizontalScene();
 		rerouteArrows(tmpEls, null);
-		Expect(tmpEls.find((e) => e.id === 'e1').roundness).to.deep.equal({ type: 2 });
+		Expect(tmpEls.find((e) => e.id === 'e1').roundness).to.equal(null);
 	});
 
 	test('lands perpendicular on a top edge for a vertical (stacked) connector', function ()
@@ -280,10 +284,39 @@ suite('PictRendererGraph — arrow re-routing (perpendicular landings)', functio
 		];
 		rerouteArrows(tmpEls, null);
 		let tmpArrow = tmpEls.find((e) => e.id === 'e1');
+		let tmpN = tmpArrow.points.length;
 		// Last segment is flat in x (vertical), so it meets B's top edge square-on.
-		Expect(tmpArrow.points[3][0]).to.equal(tmpArrow.points[2][0]);
+		Expect(tmpArrow.points[tmpN - 1][0]).to.equal(tmpArrow.points[tmpN - 2][0]);
 		// ...and continues downward into the edge (end is below the approach).
-		Expect(tmpArrow.points[3][1]).to.be.greaterThan(tmpArrow.points[2][1]);
+		Expect(tmpArrow.points[tmpN - 1][1]).to.be.greaterThan(tmpArrow.points[tmpN - 2][1]);
+	});
+
+	test('two connectors converging on one edge land at DISTINCT points (no crossing)', function ()
+	{
+		// The layer4 case: two boxes above, both pointing down into one box below.
+		// Each arrival must get its own slot across the target's top edge, ordered
+		// by the source's x, so the curves never cross to reach a shared midpoint.
+		// Sources overlap the target horizontally (so it's "below", not "off to one
+		// side") -- exactly how restify/static sit above core in layer4.
+		let tmpEls = [
+			{ id: 'left',   type: 'rectangle', x: 160, y: 0,   width: 120, height: 60 },
+			{ id: 'right',  type: 'rectangle', x: 300, y: 0,   width: 120, height: 60 },
+			{ id: 'target', type: 'rectangle', x: 150, y: 250, width: 220, height: 80 },
+			{ id: 'eL', type: 'arrow', x: 0, y: 0, points: [ [ 0, 0 ], [ 1, 1 ] ], startBinding: { elementId: 'left' },  endBinding: { elementId: 'target' } },
+			{ id: 'eR', type: 'arrow', x: 0, y: 0, points: [ [ 0, 0 ], [ 1, 1 ] ], startBinding: { elementId: 'right' }, endBinding: { elementId: 'target' } }
+		];
+		rerouteArrows(tmpEls, null);
+		let tmpL = tmpEls.find((e) => e.id === 'eL');
+		let tmpR = tmpEls.find((e) => e.id === 'eR');
+		let tmpLEndX = tmpL.x + tmpL.points[tmpL.points.length - 1][0];
+		let tmpREndX = tmpR.x + tmpR.points[tmpR.points.length - 1][0];
+		// Distinct landings...
+		Expect(tmpLEndX).to.not.equal(tmpREndX);
+		// ...and the left source lands left of the right source (no swap/cross).
+		Expect(tmpLEndX).to.be.lessThan(tmpREndX);
+		// Both still on the target's top edge (y = target.y = 250).
+		Expect(tmpL.y + tmpL.points[tmpL.points.length - 1][1]).to.equal(250);
+		Expect(tmpR.y + tmpR.points[tmpR.points.length - 1][1]).to.equal(250);
 	});
 
 	test('leaves an unbound connector untouched', function ()
@@ -293,6 +326,47 @@ suite('PictRendererGraph — arrow re-routing (perpendicular landings)', functio
 		];
 		rerouteArrows(tmpEls, null);
 		Expect(tmpEls[0].points.length).to.equal(3);
+	});
+
+	test('departs from the edge facing the target, not mermaid\'s attachment side', function ()
+	{
+		// mermaid attached the start to box A's TOP edge (a hub fanning out),
+		// but the target sits off to the right -- so the connector must depart
+		// from A's RIGHT edge midpoint and run rightward, not upward.
+		let tmpEls = [
+			{ id: 'a', type: 'rectangle', x: 0,   y: 0,   width: 100, height: 60 },
+			{ id: 'b', type: 'rectangle', x: 400, y: -40, width: 100, height: 60 },
+			{
+				id: 'e', type: 'arrow', x: 50, y: 0,
+				points: [ [ 0, 0 ], [ 400, -10 ] ],         // mermaid drew it from A's top
+				startBinding: { elementId: 'a' }, endBinding: { elementId: 'b' }
+			}
+		];
+		rerouteArrows(tmpEls, null);
+		let tmpArrow = tmpEls.find((e) => e.id === 'e');
+		// Anchored at A's right-edge midpoint (100, 30), not the top (50, 0).
+		Expect(tmpArrow.x).to.equal(100);
+		Expect(tmpArrow.y).to.equal(30);
+		// First hop runs right (perpendicular to the right edge): +x, flat y.
+		Expect(tmpArrow.points[1][0]).to.be.greaterThan(0);
+		Expect(tmpArrow.points[1][1]).to.equal(0);
+	});
+
+	test('attaches to top/bottom only when the target is clearly above/below', function ()
+	{
+		// Target almost directly below (dy dominates dx) -> vertical attach.
+		let tmpEls = [
+			{ id: 'a', type: 'rectangle', x: 0,  y: 0,   width: 100, height: 60 },
+			{ id: 'b', type: 'rectangle', x: 20, y: 300, width: 100, height: 60 },
+			{ id: 'e', type: 'arrow', x: 50, y: 60, points: [ [ 0, 0 ], [ 20, 240 ] ], startBinding: { elementId: 'a' }, endBinding: { elementId: 'b' } }
+		];
+		rerouteArrows(tmpEls, null);
+		let tmpArrow = tmpEls.find((e) => e.id === 'e');
+		// Departs A's bottom-edge midpoint (50, 60) heading straight down.
+		Expect(tmpArrow.x).to.equal(50);
+		Expect(tmpArrow.y).to.equal(60);
+		Expect(tmpArrow.points[1][0]).to.equal(0);            // flat x
+		Expect(tmpArrow.points[1][1]).to.be.greaterThan(0);   // +y (downward)
 	});
 });
 
