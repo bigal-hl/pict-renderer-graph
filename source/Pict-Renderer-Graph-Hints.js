@@ -29,17 +29,18 @@ function _escapeLabel(pStr)
 	return String(pStr == null ? '' : pStr).replace(/"/g, '');
 }
 
-// Build the %%{init}%% directive carrying engine + spacing, or '' if neither.
+// Build the %%{init}%% directive. Always sets a generous wrappingWidth so
+// mermaid keeps long-ish labels (module names like pict-section-objecteditor)
+// on one line instead of breaking them mid-word; layers spacing + engine on top.
 function _initDirective(pHints)
 {
-	let tmpFlowchart = {};
+	let tmpFlowchart = { wrappingWidth: 320 };
 	if (pHints.spacing)
 	{
 		if (typeof pHints.spacing.node === 'number') { tmpFlowchart.nodeSpacing = pHints.spacing.node; }
 		if (typeof pHints.spacing.rank === 'number') { tmpFlowchart.rankSpacing = pHints.spacing.rank; }
 	}
 	if (pHints.engine === 'elk') { tmpFlowchart.defaultRenderer = 'elk'; }
-	if (!Object.keys(tmpFlowchart).length) { return ''; }
 	return '%%{init: ' + JSON.stringify({ flowchart: tmpFlowchart }) + '}%%\n';
 }
 

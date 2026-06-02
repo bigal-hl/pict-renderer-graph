@@ -22,6 +22,12 @@ const _FontFamilyMap = require('pict-section-excalidraw/scripts/Generate-Noteboo
 	|| { 'Excalifont': 5, 'Helvetica': 2, 'Cascadia': 3, 'Lilita One': 7 };
 const _DefaultFontFamily = 5; // Excalifont
 
+// Excalifont renders wider + taller than mermaid's default metrics at the same
+// point size, so mermaid-sized boxes overflow once we swap the font in. Scale
+// the text down uniformly to bring it back inside the boxes (and keep the
+// whole diagram visually consistent rather than per-box-fitted).
+const _MermaidFontScale = 0.8;
+
 // Tiny deterministic FNV-1a hash -> integer (matches the generator).
 function hashString(pStr)
 {
@@ -117,9 +123,13 @@ function restyleElements(pElements, pProfile)
 			case 'text':
 				tmpElement.strokeColor = tmpInk;
 				tmpElement.fontFamily  = tmpFontCode;
+				// Scale down so the wider/taller Excalifont fits the box mermaid
+				// sized for its own narrower font.
+				if (typeof tmpElement.fontSize === 'number')
+				{
+					tmpElement.fontSize = Math.max(11, Math.round(tmpElement.fontSize * _MermaidFontScale));
+				}
 				tmpElement.seed        = seedFor(pProfile, 'label:' + tmpKey);
-				// Leave fontSize alone -- mermaid sized the containers around
-				// its own metrics; re-sizing here would overflow the boxes.
 				break;
 
 			case 'arrow':
@@ -127,7 +137,9 @@ function restyleElements(pElements, pProfile)
 				tmpElement.strokeColor = tmpEdge;
 				tmpElement.strokeWidth = tmpStrokeWidth;
 				tmpElement.strokeStyle = tmpStrokeStyle;
-				tmpElement.roughness   = tmpRoughness;
+				// Connectors read cleaner without wobble -- the hand-drawn feel
+				// lives in the shapes; jittery arrows just look noisy.
+				tmpElement.roughness   = 0;
 				tmpElement.seed        = seedFor(pProfile, 'edge:' + tmpKey);
 				break;
 

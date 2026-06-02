@@ -43,21 +43,22 @@ suite('PictRendererGraph — restyle (mermaid -> themed ink)', function ()
 		Expect(tmpEls[0].fillStyle).to.equal(Profile.FillStyle);
 	});
 
-	test('text takes Excalifont + ink and keeps its mermaid font size', function ()
+	test('text takes Excalifont + ink and is scaled down to fit the box', function ()
 	{
 		let tmpEls = [ { id: 't1', type: 'text', text: 'API', fontFamily: 1, fontSize: 16 } ];
 		restyleElements(tmpEls, Profile);
 		Expect(tmpEls[0].fontFamily).to.equal(5);           // Excalifont
 		Expect(tmpEls[0].strokeColor).to.equal(Profile.Palette.ink);
-		Expect(tmpEls[0].fontSize).to.equal(16);            // unchanged (avoids overflow)
+		Expect(tmpEls[0].fontSize).to.equal(13);            // 16 * 0.8, rounded -- fits the mermaid box
 	});
 
-	test('edges take the link palette color', function ()
+	test('edges take the link palette color and render without wobble', function ()
 	{
 		let tmpEls = [ { id: 'e1', type: 'arrow' }, { id: 'e2', type: 'line' } ];
 		restyleElements(tmpEls, Profile);
 		Expect(tmpEls[0].strokeColor).to.equal(Profile.Palette.link);
 		Expect(tmpEls[1].strokeColor).to.equal(Profile.Palette.link);
+		Expect(tmpEls[0].roughness).to.equal(0);
 	});
 
 	test('seed is deterministic for the same key + profile', function ()

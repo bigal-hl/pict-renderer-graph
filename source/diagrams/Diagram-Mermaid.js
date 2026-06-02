@@ -74,7 +74,12 @@ module.exports =
 				let tmpElement = tmpElements[i];
 				if (tmpElement && tmpElement.type === 'text' && typeof tmpElement.text === 'string')
 				{
-					tmpElement.text = tmpElement.text.replace(/<br\s*\/?>/gi, '\n');
+					// <br/> -> newline, then collapse the doubled blank lines
+					// mermaid-to-excalidraw emits around hard breaks.
+					tmpElement.text = tmpElement.text
+						.replace(/<br\s*\/?>/gi, '\n')
+						.replace(/[ \t]*\n[ \t]*\n[ \t]*/g, '\n')
+						.replace(/\n{2,}/g, '\n');
 				}
 			}
 			// Apply the style profile's ink over mermaid's structure so the

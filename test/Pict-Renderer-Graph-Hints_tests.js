@@ -49,9 +49,11 @@ suite('PictRendererGraph — layout hints (mermaid rewriting)', function ()
 		Expect(applyLayoutHints(_Src, { order: [ [ 'a', 'b', 'c' ] ] }).mermaid).to.contain('a ~~~ b ~~~ c');
 	});
 
-	test('is a no-op when no layout hints are present', function ()
+	test('always sets a generous wrapping width, even with no other hints', function ()
 	{
-		Expect(applyLayoutHints(_Src, {}).mermaid).to.equal(_Src);
+		let tmpOut = applyLayoutHints(_Src, {}).mermaid;
+		Expect(tmpOut).to.contain('"wrappingWidth"');   // keeps long labels on one line
+		Expect(tmpOut).to.contain(_Src);                // original source preserved
 	});
 });
 
