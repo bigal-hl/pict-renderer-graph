@@ -12,7 +12,7 @@
 const Chai = require('chai');
 const Expect = Chai.expect;
 
-const { restyleElements, seedFor, applyEmphasis, buildIdLabelMap } = require('../source/Pict-Renderer-Graph-Restyle.js');
+const { restyleElements, seedFor, applyEmphasis, buildIdLabelMap, reflowText } = require('../source/Pict-Renderer-Graph-Restyle.js');
 const { themeifySVG } = require('../source/Pict-Renderer-Graph-Theme-SVG.js');
 const Profile = require('pict-section-excalidraw/source/style-profiles/Notebook-Default.js');
 
@@ -179,5 +179,28 @@ suite('PictRendererGraph — emphasis hints', function ()
 		let tmpEls2 = makeScene();
 		applyEmphasis(tmpEls2, [], _Mermaid, Profile);
 		Expect(tmpEls2.find((e) => e.id === 't_db').strokeColor).to.equal('#1B1F23');
+	});
+});
+
+suite('PictRendererGraph — text re-flow (repair mermaid wrap)', function ()
+{
+	test('rewraps a stranded-token label greedily, preserving the <br/> title break', function ()
+	{
+		// mermaid-to-excalidraw's broken output strands "DI," on its own line.
+		let tmpEls = [ { id: 't1', type: 'text', text: 'Layer 1 - Fable (Core Ecosystem)\nDI,\nconfiguration, logging, UUID, expressions' } ];
+		let tmpMermaid = 'graph TB\n  L1["Layer 1 - Fable (Core Ecosystem)<br/>DI, configuration, logging, UUID, expressions"]';
+		reflowText(tmpEls, tmpMermaid);
+		let tmpLines = tmpEls[0].text.split('\n');
+		Expect(tmpLines[0]).to.equal('Layer 1 - Fable (Core Ecosystem)');   // <br/> title break kept
+		Expect(tmpLines.indexOf('DI,')).to.equal(-1);                       // no stranded token
+		Expect(tmpEls[0].text).to.contain('DI, configuration');             // greedy: joined with next words
+		Expect(tmpLines.length).to.be.at.most(3);                           // fits the box (no extra lines)
+	});
+
+	test('leaves text it cannot match to a label alone', function ()
+	{
+		let tmpEls = [ { id: 't1', type: 'text', text: 'Totally unrelated text' } ];
+		reflowText(tmpEls, 'graph TB\n  A["Something else"]');
+		Expect(tmpEls[0].text).to.equal('Totally unrelated text');
 	});
 });

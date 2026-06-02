@@ -29,12 +29,15 @@ function _escapeLabel(pStr)
 	return String(pStr == null ? '' : pStr).replace(/"/g, '');
 }
 
-// Build the %%{init}%% directive. Always sets a generous wrappingWidth so
-// mermaid keeps long-ish labels (module names like pict-section-objecteditor)
-// on one line instead of breaking them mid-word; layers spacing + engine on top.
+// Build the %%{init}%% directive. Sets a very high wrappingWidth to disable
+// mermaid-to-excalidraw's auto-wrap entirely -- its wrapper breaks a too-wide
+// line after the first comma/hyphen token (non-greedy, leaving "DI," or "Auto-"
+// stranded on their own line), so we never let a line exceed the cap and rely
+// on explicit <br/> in the label for line breaks instead. Spacing + engine
+// layer on top.
 function _initDirective(pHints)
 {
-	let tmpFlowchart = { wrappingWidth: 320 };
+	let tmpFlowchart = { wrappingWidth: 10000 };
 	if (pHints.spacing)
 	{
 		if (typeof pHints.spacing.node === 'number') { tmpFlowchart.nodeSpacing = pHints.spacing.node; }

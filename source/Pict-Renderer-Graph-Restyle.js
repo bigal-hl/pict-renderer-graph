@@ -140,6 +140,18 @@ function restyleElements(pElements, pProfile)
 				// Connectors read cleaner without wobble -- the hand-drawn feel
 				// lives in the shapes; jittery arrows just look noisy.
 				tmpElement.roughness   = 0;
+				// Drop mermaid's intermediate curve points so a connector goes
+				// straight to its target instead of swooping past and curling
+				// back into the edge at a bad angle. The start/end bindings
+				// re-clip it to the box edges on render.
+				if (Array.isArray(tmpElement.points) && tmpElement.points.length > 2)
+				{
+					let tmpFirst = tmpElement.points[0];
+					let tmpLast  = tmpElement.points[tmpElement.points.length - 1];
+					tmpElement.points = [ tmpFirst, tmpLast ];
+					tmpElement.width  = Math.abs(tmpLast[0] - tmpFirst[0]);
+					tmpElement.height = Math.abs(tmpLast[1] - tmpFirst[1]);
+				}
 				tmpElement.seed        = seedFor(pProfile, 'edge:' + tmpKey);
 				break;
 
@@ -254,10 +266,94 @@ function applyEmphasis(pElements, pEmphasis, pMermaid, pProfile)
 	return pElements;
 }
 
+// Greedy word-wrap a string to a maximum character count per line.
+function _greedyWrap(pText, pMaxChars)
+{
+	let tmpWords = String(pText == null ? '' : pText).split(/\s+/).filter((w) => w.length);
+	if (!tmpWords.length) { return ['']; }
+	let tmpLines = [];
+	let tmpCurrent = '';
+	for (let i = 0; i < tmpWords.length; i++)
+	{
+		let tmpWord = tmpWords[i];
+		if (!tmpCurrent) { tmpCurrent = tmpWord; }
+		else if ((tmpCurrent.length + 1 + tmpWord.length) <= pMaxChars) { tmpCurrent += ' ' + tmpWord; }
+		else { tmpLines.push(tmpCurrent); tmpCurrent = tmpWord; }
+	}
+	if (tmpCurrent) { tmpLines.push(tmpCurrent); }
+	return tmpLines;
+}
+
+// Map a mermaid source's labels to their author-intended <br/> segments,
+// keyed by the label's break-stripped, lowercased text (so a rendered text
+// element can be matched back to its original label).
+function _labelSegmentsMap(pMermaid)
+{
+	let tmpMap = {};
+	if (typeof pMermaid !== 'string') { return tmpMap; }
+	let tmpJoinKey = (s) => String(s == null ? '' : s).replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+	let tmpToSegments = (pLabel) => pLabel.split(/<br\s*\/?>/i).map((s) => s.replace(/<[^>]+>/g, '').trim()).filter((s) => s.length);
+
+	let tmpQuoted = /[\[\(\{]+\s*"([^"]*)"/g;
+	let tmpMatch;
+	while ((tmpMatch = tmpQuoted.exec(pMermaid)))
+	{
+		let tmpSegs = tmpToSegments(tmpMatch[1]);
+		if (tmpSegs.length) { tmpMap[tmpJoinKey(tmpMatch[1])] = tmpSegs; }
+	}
+	let tmpUnquoted = /[\[\(\{]+([^\]\)\}|"]+?)[\]\)\}]+/g;
+	while ((tmpMatch = tmpUnquoted.exec(pMermaid)))
+	{
+		let tmpKey = tmpJoinKey(tmpMatch[1]);
+		if (tmpMap[tmpKey]) { continue; }
+		let tmpSegs = tmpToSegments(tmpMatch[1]);
+		if (tmpSegs.length) { tmpMap[tmpKey] = tmpSegs; }
+	}
+	return tmpMap;
+}
+
+/**
+ * Re-flow text elements to undo mermaid-to-excalidraw's broken auto-wrap (it
+ * strands the first comma/hyphen token on its own line). We rebuild each
+ * label from its author-intended <br/> segments and greedy-wrap every segment
+ * to the widest line that ALREADY fit the box -- so the result is sensible and
+ * guaranteed to fit (no font measurement needed).
+ *
+ * @param {Array}  pElements - excalidraw elements (mutated)
+ * @param {string} pMermaid  - the original mermaid source (for the labels)
+ * @returns {Array} the same array
+ */
+function reflowText(pElements, pMermaid)
+{
+	if (!Array.isArray(pElements)) { return pElements; }
+	let tmpMap = _labelSegmentsMap(pMermaid);
+	let tmpJoinKey = (s) => String(s == null ? '' : s).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+	for (let i = 0; i < pElements.length; i++)
+	{
+		let tmpEl = pElements[i];
+		if (tmpEl.type !== 'text' || (typeof tmpEl.text !== 'string')) { continue; }
+		let tmpSegments = tmpMap[tmpJoinKey(tmpEl.text.replace(/\n/g, ' '))];
+		if (!tmpSegments) { continue; }
+
+		// The widest line mermaid already produced fits the box; wrap to it.
+		let tmpExisting = tmpEl.text.split('\n');
+		let tmpMaxChars = 1;
+		for (let l = 0; l < tmpExisting.length; l++) { tmpMaxChars = Math.max(tmpMaxChars, tmpExisting[l].length); }
+
+		let tmpLines = [];
+		for (let s = 0; s < tmpSegments.length; s++) { tmpLines = tmpLines.concat(_greedyWrap(tmpSegments[s], tmpMaxChars)); }
+		// Only adopt the re-flow if it doesn't add lines (stays inside the box).
+		if (tmpLines.length <= tmpExisting.length) { tmpEl.text = tmpLines.join('\n'); }
+	}
+	return pElements;
+}
+
 module.exports =
 {
 	restyleElements: restyleElements,
 	applyEmphasis:   applyEmphasis,
+	reflowText:      reflowText,
 	buildIdLabelMap: buildIdLabelMap,
 	seedFor:         seedFor,
 	fontFamilyIndex: fontFamilyIndex

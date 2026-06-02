@@ -89,6 +89,10 @@ module.exports =
 			if (pGraph.restyle !== false)
 			{
 				libRestyle.restyleElements(tmpElements, pProfile);
+				// Repair mermaid-to-excalidraw's broken label wrapping (it
+				// strands the first comma/hyphen token on its own line) using
+				// the original <br/> structure -- a greedy re-flow that fits.
+				libRestyle.reflowText(tmpElements, pGraph.mermaid);
 			}
 			// Cluster frames: quiet the visible ones (dashed deemphasis) and
 			// strip the invisible ones (they existed only to group the layout).
