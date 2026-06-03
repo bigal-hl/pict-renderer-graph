@@ -59,7 +59,7 @@
 		"lru-cache": "^11.5.0",
 		"orator": "^6.1.2",
 		"orator-serviceserver-restify": "^2.0.11",
-		"pict-section-excalidraw": "file:../pict-section-excalidraw",
+		"pict-section-excalidraw": "^1.0.2",
 		"puppeteer": "^24.43.1"
 	}
 }
