@@ -13,6 +13,6 @@
 		"fable":                       "^3.1.75",
 		"orator":                      "^6.1.2",
 		"orator-serviceserver-restify": "^2.0.11",
-		"pict-renderer-graph":         "file:../.."
+		"pict-renderer-graph":         "^1.0.0"
 	}
 }
