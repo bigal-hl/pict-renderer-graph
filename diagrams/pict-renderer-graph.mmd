@@ -1,0 +1,5 @@
+graph LR
+    Input["structured graph JSON<br/>type: &quot;flow&quot;<br/>nodes: [...]<br/>edges: [...]<br/>style: &quot;notebook&quot;"]
+    Renderer["pict-renderer-graph<br/>diagram registry<br/>style profile<br/>Generate scene<br/>Chromium exportToSvg"]
+    Output["SVG with embedded scene<br/>&lt;svg&gt;<br/>&lt;metadata&gt;<br/>&lt;!-- excalidraw payload --&gt;<br/>&lt;pict-renderer-graph:source/&gt;<br/>&lt;/metadata&gt;<br/>...drawings...<br/>&lt;/svg&gt;"]
+    Input --> Renderer --> Output

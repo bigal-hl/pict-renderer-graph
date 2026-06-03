@@ -1,0 +1,542 @@
+{
+	"type": "excalidraw",
+	"version": 2,
+	"source": "pict-section-excalidraw/notebook-generator",
+	"elements": [
+		{
+			"id": "shape-Input-000000ms",
+			"type": "rectangle",
+			"x": 16,
+			"y": 54,
+			"width": 263,
+			"height": 153,
+			"angle": 0,
+			"strokeColor": "#1B1F23",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 2,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": {
+				"type": 3
+			},
+			"seed": 820,
+			"version": 1,
+			"versionNonce": 820,
+			"isDeleted": false,
+			"boundElements": [
+				{
+					"id": "label-Input-000000ew",
+					"type": "text"
+				},
+				{
+					"id": "arrow-Input-Renderer-000000d8",
+					"type": "arrow"
+				}
+			],
+			"updated": 1,
+			"link": null,
+			"locked": false,
+			"index": null
+		},
+		{
+			"id": "label-Input-000000ew",
+			"type": "text",
+			"x": 24,
+			"y": 68,
+			"width": 247,
+			"height": 125,
+			"angle": 0,
+			"strokeColor": "#1B1F23",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 1,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": null,
+			"seed": 536,
+			"version": 1,
+			"versionNonce": 536,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1,
+			"link": null,
+			"locked": false,
+			"text": "structured graph JSON\ntype: \"flow\"\nnodes: [...]\nedges: [...]\nstyle: \"notebook\"",
+			"fontSize": 20,
+			"fontFamily": 5,
+			"textAlign": "center",
+			"verticalAlign": "middle",
+			"baseline": 15,
+			"containerId": "shape-Input-000000ms",
+			"originalText": "structured graph JSON\ntype: \"flow\"\nnodes: [...]\nedges: [...]\nstyle: \"notebook\"",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"index": null
+		},
+		{
+			"id": "shape-Renderer-000000f4",
+			"type": "rectangle",
+			"x": 369,
+			"y": 54,
+			"width": 253,
+			"height": 153,
+			"angle": 0,
+			"strokeColor": "#1B1F23",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 2,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": {
+				"type": 3
+			},
+			"seed": 544,
+			"version": 1,
+			"versionNonce": 544,
+			"isDeleted": false,
+			"boundElements": [
+				{
+					"id": "arrow-Input-Renderer-000000d8",
+					"type": "arrow"
+				},
+				{
+					"id": "arrow-Renderer-Output-00000055",
+					"type": "arrow"
+				}
+			],
+			"updated": 1,
+			"link": null,
+			"locked": false,
+			"index": null
+		},
+		{
+			"id": "label-Renderer-000000a1",
+			"type": "text",
+			"x": 369,
+			"y": 103,
+			"width": 253,
+			"height": 80,
+			"angle": 0,
+			"strokeColor": "#1B1F23",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 1,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": null,
+			"seed": 361,
+			"version": 1,
+			"versionNonce": 361,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1,
+			"link": null,
+			"locked": false,
+			"text": "diagram registry\nstyle profile\nGenerate scene\nChromium exportToSvg",
+			"fontSize": 16,
+			"fontFamily": 5,
+			"textAlign": "center",
+			"verticalAlign": "top",
+			"baseline": 15,
+			"containerId": null,
+			"originalText": "diagram registry\nstyle profile\nGenerate scene\nChromium exportToSvg",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"index": null
+		},
+		{
+			"id": "shape-Output-000000q9",
+			"type": "rectangle",
+			"x": 712,
+			"y": 16,
+			"width": 351,
+			"height": 228,
+			"angle": 0,
+			"strokeColor": "#1B1F23",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 2,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": {
+				"type": 3
+			},
+			"seed": 945,
+			"version": 1,
+			"versionNonce": 945,
+			"isDeleted": false,
+			"boundElements": [
+				{
+					"id": "label-Output-0000004d",
+					"type": "text"
+				},
+				{
+					"id": "arrow-Renderer-Output-00000055",
+					"type": "arrow"
+				}
+			],
+			"updated": 1,
+			"link": null,
+			"locked": false,
+			"index": null
+		},
+		{
+			"id": "label-Output-0000004d",
+			"type": "text",
+			"x": 720,
+			"y": 30,
+			"width": 335,
+			"height": 200,
+			"angle": 0,
+			"strokeColor": "#1B1F23",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 1,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": null,
+			"seed": 157,
+			"version": 1,
+			"versionNonce": 157,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1,
+			"link": null,
+			"locked": false,
+			"text": "SVG with embedded scene\n<svg>\n<metadata>\n<!-- excalidraw payload -->\n<pict-renderer-graph:source/>\n</metadata>\n...drawings...\n</svg>",
+			"fontSize": 20,
+			"fontFamily": 5,
+			"textAlign": "center",
+			"verticalAlign": "middle",
+			"baseline": 15,
+			"containerId": "shape-Output-000000q9",
+			"originalText": "SVG with embedded scene\n<svg>\n<metadata>\n<!-- excalidraw payload -->\n<pict-renderer-graph:source/>\n</metadata>\n...drawings...\n</svg>",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"index": null
+		},
+		{
+			"id": "arrow-Input-Renderer-000000d8",
+			"type": "arrow",
+			"x": 279,
+			"y": 130.5,
+			"width": 90,
+			"height": 5.684341886080802e-14,
+			"angle": 0,
+			"strokeColor": "#2E7D74",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 2,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": null,
+			"seed": 476,
+			"version": 1,
+			"versionNonce": 476,
+			"isDeleted": false,
+			"boundElements": [],
+			"updated": 1,
+			"link": null,
+			"locked": false,
+			"points": [
+				[
+					0,
+					0
+				],
+				[
+					16,
+					0
+				],
+				[
+					19.875171467764005,
+					-2.842170943040401e-14
+				],
+				[
+					23.51989026063103,
+					0
+				],
+				[
+					26.96296296296299,
+					2.842170943040401e-14
+				],
+				[
+					30.233196159122087,
+					0
+				],
+				[
+					33.359396433470465,
+					0
+				],
+				[
+					36.37037037037038,
+					2.842170943040401e-14
+				],
+				[
+					39.29492455418381,
+					0
+				],
+				[
+					42.161865569273004,
+					0
+				],
+				[
+					45,
+					0
+				],
+				[
+					47.83813443072705,
+					0
+				],
+				[
+					50.70507544581619,
+					0
+				],
+				[
+					53.62962962962956,
+					0
+				],
+				[
+					56.640603566529535,
+					0
+				],
+				[
+					59.76680384087791,
+					0
+				],
+				[
+					63.03703703703707,
+					2.842170943040401e-14
+				],
+				[
+					66.48010973936903,
+					0
+				],
+				[
+					70.12482853223594,
+					0
+				],
+				[
+					74,
+					0
+				],
+				[
+					90,
+					0
+				]
+			],
+			"lastCommittedPoint": null,
+			"startBinding": {
+				"elementId": "shape-Input-000000ms",
+				"focus": 0,
+				"gap": 8
+			},
+			"endBinding": {
+				"elementId": "shape-Renderer-000000f4",
+				"focus": 0,
+				"gap": 8
+			},
+			"startArrowhead": null,
+			"endArrowhead": "arrow",
+			"elbowed": false,
+			"index": null
+		},
+		{
+			"id": "arrow-Renderer-Output-00000055",
+			"type": "arrow",
+			"x": 622,
+			"y": 130.5,
+			"width": 90,
+			"height": 0.5,
+			"angle": 0,
+			"strokeColor": "#2E7D74",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 2,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": null,
+			"seed": 185,
+			"version": 1,
+			"versionNonce": 185,
+			"isDeleted": false,
+			"boundElements": [],
+			"updated": 1,
+			"link": null,
+			"locked": false,
+			"points": [
+				[
+					0,
+					0
+				],
+				[
+					16,
+					0
+				],
+				[
+					19.87517146776395,
+					-0.004458161865585453
+				],
+				[
+					23.519890260630973,
+					-0.0171467764060651
+				],
+				[
+					26.962962962962933,
+					-0.03703703703700967
+				],
+				[
+					30.233196159122144,
+					-0.06310013717421725
+				],
+				[
+					33.35939643347058,
+					-0.09430727023320173
+				],
+				[
+					36.37037037037044,
+					-0.1296296296296191
+				],
+				[
+					39.29492455418392,
+					-0.16803840877915377
+				],
+				[
+					42.161865569273004,
+					-0.20850480109737646
+				],
+				[
+					45,
+					-0.25
+				],
+				[
+					47.838134430726996,
+					-0.2914951989025951
+				],
+				[
+					50.70507544581619,
+					-0.33196159122084623
+				],
+				[
+					53.62962962962956,
+					-0.3703703703703809
+				],
+				[
+					56.640603566529535,
+					-0.40569272976679827
+				],
+				[
+					59.766803840877856,
+					-0.43689986282578275
+				],
+				[
+					63.03703703703718,
+					-0.4629629629629619
+				],
+				[
+					66.48010973936903,
+					-0.4828532235939633
+				],
+				[
+					70.12482853223594,
+					-0.49554183813444297
+				],
+				[
+					74,
+					-0.5
+				],
+				[
+					90,
+					-0.5
+				]
+			],
+			"lastCommittedPoint": null,
+			"startBinding": {
+				"elementId": "shape-Renderer-000000f4",
+				"focus": 0,
+				"gap": 8
+			},
+			"endBinding": {
+				"elementId": "shape-Output-000000q9",
+				"focus": 0,
+				"gap": 8
+			},
+			"startArrowhead": null,
+			"endArrowhead": "arrow",
+			"elbowed": false,
+			"index": null
+		},
+		{
+			"id": "label-Renderer-000000a1_title",
+			"type": "text",
+			"x": 369,
+			"y": 78,
+			"width": 253,
+			"height": 25,
+			"angle": 0,
+			"strokeColor": "#1B1F23",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 1,
+			"strokeStyle": "solid",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"roundness": null,
+			"seed": 504,
+			"version": 1,
+			"versionNonce": 361,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1,
+			"link": null,
+			"locked": false,
+			"text": "pict-renderer-graph",
+			"fontSize": 20,
+			"fontFamily": 5,
+			"textAlign": "center",
+			"verticalAlign": "top",
+			"baseline": 15,
+			"containerId": null,
+			"originalText": "pict-renderer-graph",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"index": null
+		}
+	],
+	"appState": {
+		"viewBackgroundColor": "#FBF7EE",
+		"theme": "light",
+		"gridSize": null,
+		"exportBackground": true,
+		"exportEmbedScene": true,
+		"exportScale": 1,
+		"currentItemFontFamily": 5
+	},
+	"files": {}
+}

@@ -6,20 +6,8 @@
 
 `pict-section-excalidraw` proved that Excalidraw can be driven programmatically. **pict-renderer-graph** packages that capability as a first-class server-side service: a pre-warmed Chromium, a unified graph-input schema, and three invocation modes (library / CLI / HTTP).
 
-```
-   structured graph JSON         pict-renderer-graph              SVG with embedded scene
-   ┌─────────────────────┐    ┌─────────────────────────┐    ┌────────────────────────┐
-   │  type: "flow"       │    │   ┌─ diagram registry   │    │  <svg>                 │
-   │  nodes: [...]       │ ──►│   ├─ style profile      │ ──►│    <metadata>          │
-   │  edges: [...]       │    │   ├─ Generate scene     │    │     <!-- excalidraw    │
-   │  style: "notebook"  │    │   └─► Chromium          │    │          payload --> │
-   │                     │    │       exportToSvg       │    │     <pict-renderer-    │
-   └─────────────────────┘    └─────────────────────────┘    │          graph:source/>│
-                                                              │    </metadata>         │
-                                                              │    ...drawings...      │
-                                                              │  </svg>                │
-                                                              └────────────────────────┘
-```
+<!-- bespoke diagram: edit diagrams/pict-renderer-graph.mmd or .hints.json, then: npx pict-renderer-graph build . -->
+![pict-renderer-graph](diagrams/pict-renderer-graph.svg)
 
 ## Quick start
 

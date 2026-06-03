@@ -39,6 +39,16 @@ suite('PictRendererGraph — mermaid flowchart parser', function ()
 		Expect(parseNodeToken('n["Title<br/>detail"]').label).to.equal('Title\ndetail');
 	});
 
+	test('decodes html entities to their literal characters in labels', function ()
+	{
+		// Authors escape literal angle brackets / quotes so they survive tag stripping.
+		Expect(parseNodeToken('n["&lt;Entity&gt;"]').label).to.equal('<Entity>');
+		Expect(parseNodeToken('n["type: &quot;flow&quot;"]').label).to.equal('type: "flow"');
+		Expect(parseNodeToken('n["Route &amp; Middleware"]').label).to.equal('Route & Middleware');
+		// &amp; is decoded last so a single pass never double-unescapes.
+		Expect(parseNodeToken('n["a &amp;lt; b"]').label).to.equal('a &lt; b');
+	});
+
 	test('parses subgraphs, nesting, and parentage', function ()
 	{
 		let tmpSrc = 'graph TB\n' +

@@ -37,6 +37,20 @@ const _Shapes =
 // mermaid edge operators (variable dash counts), longest/most-specific first.
 const _ArrowRe = /(-\.->|<-->|-->|---|==>|===|--o|--x|-\.-)/;
 
+// Decode the handful of HTML entities authors use when a label needs to show a
+// literal angle bracket / ampersand / quote (e.g. "&lt;Entity&gt;" or "&quot;x&quot;").
+// `&amp;` is decoded LAST so a single pass never double-unescapes.
+function _decodeEntities(pStr)
+{
+	return String(pStr)
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&#0*39;/g, '\'')
+		.replace(/&apos;/g, '\'')
+		.replace(/&amp;/g, '&');
+}
+
 function _cleanLabel(pRaw)
 {
 	let tmpStr = String(pRaw == null ? '' : pRaw).trim();
@@ -44,6 +58,9 @@ function _cleanLabel(pRaw)
 	tmpStr = tmpStr.replace(/^"([\s\S]*)"$/, '$1').replace(/^'([\s\S]*)'$/, '$1');
 	// Author line breaks -> real newlines; drop any other tags.
 	tmpStr = tmpStr.replace(/<br\s*\/?>/gi, '\n').replace(/<\/?[^>]+>/g, '');
+	// Entities (&lt; &gt; &amp; ...) become the literal characters they name --
+	// done after tag stripping so a decoded `<` is shown, not re-stripped.
+	tmpStr = _decodeEntities(tmpStr);
 	return tmpStr.trim();
 }
 
